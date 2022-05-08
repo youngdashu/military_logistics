@@ -6,4 +6,6 @@ if __name__ == "__main__":
 
     graph: ProvinceGraph = read_graph('./graph/input.txt')
 
+    print(graph.clusterize_divisions())
+
     visualize_graph(graph)
