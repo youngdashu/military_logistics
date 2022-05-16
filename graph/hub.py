@@ -1,5 +1,3 @@
-import json_fix
-
 class Hub:
 
     max_capacity = 20.0
@@ -8,9 +6,6 @@ class Hub:
 
     def __init__(self, level=1):
         self.level = level
-
-    def __json__(self):
-        return self.__dict__
 
     def __level_to_factor(self):
         if self.level == 1:

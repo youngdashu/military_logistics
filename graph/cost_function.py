@@ -6,17 +6,14 @@ import numpy as np
 
 from graph.hub import Hub
 
-from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
+
 
 class CostFunction:
     ratios = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
-
     def __init__(self):
         pass
-
-        # print(self.results)
 
     def __plot_3d(self, f):
         fig = plt.figure()
@@ -26,8 +23,6 @@ class CostFunction:
         y = np.linspace(self.ratios[0], self.ratios[-1], 1000)
 
         Z = f(x, y)
-
-        # print(f(self.costs[-1], 0))
 
         ax.contour3D(x, y, Z, 50, cmap='binary')
         ax.set_xlabel('costs')
@@ -53,8 +48,6 @@ class CostFunction:
         self.costs = costs
         self.results = [[0 for _ in range(len(self.costs))] for _ in range(len(self.ratios))]
 
-        # i_multiplier = [1, 1.1, 1.5, 2, 3, 5, 7, 8, 8.5, 9, 9.2]
-
         step_i = 0.1 / (len(self.ratios) * alfa)
         for i in range(0, int(len(self.ratios) * alfa)):
             step_j = 0.1 / (len(self.costs) // 2)
@@ -64,10 +57,7 @@ class CostFunction:
 
             step_j = (0.45 - 0.1) / (len(self.costs) // 2)
             for j in range(int(ceil(len(self.costs) / 2)), len(self.costs)):
-                self.results[i][j] = self.results[i][j-1] + step_j
-
-        # for x in self.results:
-        #     print(x)
+                self.results[i][j] = self.results[i][j - 1] + step_j
 
         step_i = (0.4 - 0.1) / (len(self.ratios) * alfa)
         for i in range(int(len(self.ratios) * alfa), int(len(self.ratios) * 2 * alfa)):
@@ -76,19 +66,12 @@ class CostFunction:
             for j in range(0, len(self.costs)):
                 self.results[i][j] = (i * step_i + j * step_j)
 
-        # for x in self.results:
-        #     print(x)
-
         step_i = (5 - 0.4) / (len(self.ratios) - (len(self.ratios) * alfa))
         for i in range(int(len(self.ratios) * 2 * alfa), len(self.ratios)):
             step_j = 1 / len(self.costs)
 
             for j in range(0, len(self.costs)):
-
                 self.results[i][j] = (i * step_i + j * step_j)
-
-        # for x in self.results:
-        #     print(x)
 
         f = interp2d(self.costs, self.ratios, self.results, kind='linear')
 

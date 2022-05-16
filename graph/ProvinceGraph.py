@@ -8,25 +8,19 @@ from graph.cost_function import CostFunction
 from graph.hub import Hub
 from graph.province import Province
 
-from itertools import chain
-
 from graphviz import Graph
 
 import matplotlib.colors as mcolors
 
 from random import shuffle
 
-from copy import deepcopy
-
 from time import time
-
-from json import loads, dumps
 
 
 class ProvinceGraph:
 
     def __init__(self, graph: List[Province], capital: int = None, divisions: List[int] = None):
-        self.graph: Union[List[Province]] = graph
+        self.graph: List[Province] = graph
         self.graph_tuples: Tuple[Tuple[int]] = None
         self.capital = capital
         self.divisions = divisions
@@ -68,8 +62,6 @@ class ProvinceGraph:
                               neighbour) + " -- " + str(node.node_id) not in str(graphviz_graph) else None,
                           node.neighbours)),
                  self.graph))
-
-
 
         # color of clusters
         for cluster, _color in zip(self.clusters, self.colors[:len(self.clusters)]):
@@ -197,8 +189,8 @@ class ProvinceGraph:
             ratio = supplies_hub_can_supply / supplies_circle_needs
             delivered_supplies = \
                 list(map(lambda province_id:
-                         graph[province_id].set_required_supplies(graph[province_id].required_supplies() *
-                                                                  (1.0 - ratio)),
+                         graph[province_id].set_required_supplies(
+                             graph[province_id].required_supplies() * (1.0 - ratio)),
                          provinces))
             return sum(delivered_supplies, 0.0)
 
@@ -218,31 +210,26 @@ class ProvinceGraph:
 
         for dist, provinces in enumerate(provinces_by_distance):
 
-            # for province in provinces:
-            #     required_supplies_in_circle += graph[province].required_supplies()
             required_supplies_in_circle = sum(
-                map(lambda province_id: graph[province_id].required_supplies(), provinces))
+                map(lambda province_id:
+                    graph[province_id].required_supplies(),
+                    provinces
+                    ))
 
             if required_supplies_in_circle <= hub_remaining_capacity:
                 if required_supplies_in_circle <= hub.level_to_supplies(dist):
-                    # print("----------------")
-                    # for p in provinces:
-                    #     print(graph[p].required_supplies())
-                    list(map(lambda province_id: graph[province_id].set_required_supplies(0.0),
+
+                    list(map(lambda province_id:
+                             graph[province_id].set_required_supplies(0.0),
                              provinces
                              ))
                     hub_remaining_capacity -= required_supplies_in_circle
 
-                    # for p in provinces:
-                    #     print(graph[p].required_supplies())
-                    # print("$$$$$$")
                 else:
                     hub_remaining_capacity -= set_supplies(hub.level_to_supplies(dist), required_supplies_in_circle)
 
             else:
                 hub_remaining_capacity -= set_supplies(hub_remaining_capacity, required_supplies_in_circle)
-
-        # print(provinces_by_distance)
 
     def __func_cost(self, hub_indexes: List[int], hub_levels: List[int], cluster: List[int], f: CostFunction) -> float:
 
@@ -252,15 +239,15 @@ class ProvinceGraph:
 
         self.time_copy += (time() - s)
 
-        # print(graph_copy)
-
         hubs_cost = sum(
-            map(lambda hub_level: Hub(hub_level).cost(),
-                hub_levels)
-        )
+            map(lambda hub_level:
+                Hub(hub_level).cost(),
+                hub_levels
+                ))
 
         def calculate_required_supplies_in_cluster():
-            return sum(map(lambda province_id: self.graph[province_id].required_supplies(),
+            return sum(map(lambda province_id:
+                           self.graph[province_id].required_supplies(),
                            cluster
                            ))
 
@@ -278,11 +265,6 @@ class ProvinceGraph:
         # monozymy przez procent dostarczonych zapasow
         # dzielimy przez wydane pieniadze
 
-
-
-        if f(hubs_cost, ratio)[0] < 0:
-            print("tu", hubs_cost, ratio)
-
         list(map(
             lambda key_value: self.graph[key_value[0]].set_required_supplies(key_value[1]),
             supplies_copy.items()
@@ -291,23 +273,15 @@ class ProvinceGraph:
         return f(hubs_cost, ratio)[0]
 
     def __put_hub_in_cluster(self, cluster: List[int]):
-        # self.small_graph = [None] * (len(self.graph))
-        # for node_id in cluster:
-        #     self.small_graph[node_id] = deepcopy(self.graph[node_id])
 
         best_hub_placement = None
         best_evaluation = float('inf')
-
-        # print(cluster)
-        minimal_hub_count = None
 
         # wylicz zapotrzebowanie w calym klastrze
         required_supplies = \
             functools.reduce(lambda node_1, node_2:
                              node_1 + self.graph[node_2].required_supplies(),
                              cluster, 0.0)
-
-        # print(required_supplies)
 
         minimal_hub_count = math.ceil(required_supplies / Hub.max_capacity)
 
@@ -316,20 +290,19 @@ class ProvinceGraph:
                 cluster
                 ), 0
         )
-        print("num", num_of_divisions_in_cluster, "len", len(cluster))
 
         f = CostFunction()(len(cluster))
 
         for i in range(minimal_hub_count, num_of_divisions_in_cluster):
             suggested_hubs_placement: List[Tuple[int]] = list(itertools.combinations(cluster, i))
-            # print("s: " + str(suggested_hubs_placement))
+
             print("len ", len(suggested_hubs_placement))
             for hubs in suggested_hubs_placement:
                 levels = list(itertools.combinations_with_replacement([1, 2, 3], i))
-                # levels = [[1] * i]
+
                 for level in levels:
                     evaluated_hubs_placement: float = self.__func_cost(list(hubs), list(level), cluster, f)
-                    # print(evaluated_hubs_placement)
+
                     if evaluated_hubs_placement < best_evaluation:
                         best_evaluation = evaluated_hubs_placement
                         best_hub_placement = list(hubs), level
@@ -344,14 +317,12 @@ class ProvinceGraph:
 
         return best_hub_placement
 
-        # print(i, best_evaluation, end=" ")
-
     def put_hubs_in_clusters(self):
         hubs = list(map(
-                    lambda cluster:
-                    self.__put_hub_in_cluster(cluster),
-                    self.clusters
-                ))
+            lambda cluster:
+            self.__put_hub_in_cluster(cluster),
+            self.clusters
+        ))
 
         list(map(
             lambda hubs_in_cluster:

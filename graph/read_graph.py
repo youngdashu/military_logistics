@@ -7,7 +7,6 @@ from graph.province import Province
 
 
 def read_graph(file_name='input.txt'):
-    graph_map = None
     match_edge = re.compile('^[0-9]+ [0-9]+$')
     match_node = re.compile('^[0-9]+$')
     match_special_node = re.compile('^[0-9]+ ((C( D [0-9]+.[0-9]+)?)|(D [0-9]+.[0-9]+( C)?))$')
@@ -24,16 +23,14 @@ def read_graph(file_name='input.txt'):
         for line in lines:
             line: str = line
             if match_edge.match(line):  # edge
-                # print(line)
                 nodes = tuple(map(lambda n: int(n), line.split(' ', 1)))
                 graph_map[nodes[0]].neighbours.append(nodes[1])
                 graph_map[nodes[1]].neighbours.append(nodes[0])
 
-                # print("edge " + str(nodes))
             elif match_node.match(line):  # province
                 node_id = int(line)
                 graph_map[node_id] = Province(node_id)
-                # print("id " + str(node_id))
+
             elif match_special_node.match(line):  # special province
                 line: List[str] = line.split(' ')
                 node_id = int(line[0])
@@ -47,9 +44,7 @@ def read_graph(file_name='input.txt'):
                     divisions.append(node_id)
 
                 graph_map[node_id] = Province(node_id, division)
-                # print("special " + str(line))
             else:
-                # print("Wrong line: " + line)
                 raise Exception()
 
         list(map(lambda n: print(n), graph_map))
