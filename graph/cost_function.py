@@ -1,3 +1,4 @@
+from functools import cache
 from math import ceil
 
 from scipy.interpolate import interp2d
@@ -11,18 +12,10 @@ import matplotlib.pyplot as plt
 class CostFunction:
     ratios = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
-    def __init__(self, cluster_size: int):
 
-        minV = Hub(1).cost()
-        maxV = Hub(3).cost() * cluster_size
-        diff = (maxV - minV) / 10.0
+    def __init__(self):
+        pass
 
-        costs = [minV]
-        for i in range(1, 10):
-            costs.append(costs[i - 1] + diff)
-        costs.append(maxV)
-        self.costs = costs
-        self.results = [[0 for _ in range(len(self.costs))] for _ in range(len(self.ratios))]
         # print(self.results)
 
     def __plot_3d(self, f):
@@ -46,8 +39,19 @@ class CostFunction:
         fig.show()
         exit(0)
 
+    @cache
+    def __call__(self, cluster_size: int, alfa: float = 0.1):
 
-    def __call__(self, alfa: float = 0.1):
+        minV = Hub(1).cost()
+        maxV = Hub(3).cost() * cluster_size
+        diff = (maxV - minV) / 10.0
+
+        costs = [minV]
+        for i in range(1, 10):
+            costs.append(costs[i - 1] + diff)
+        costs.append(maxV)
+        self.costs = costs
+        self.results = [[0 for _ in range(len(self.costs))] for _ in range(len(self.ratios))]
 
         # i_multiplier = [1, 1.1, 1.5, 2, 3, 5, 7, 8, 8.5, 9, 9.2]
 
