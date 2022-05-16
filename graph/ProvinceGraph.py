@@ -20,6 +20,8 @@ from copy import deepcopy
 
 from time import time
 
+from json import loads, dumps
+
 
 class ProvinceGraph:
 
@@ -30,10 +32,15 @@ class ProvinceGraph:
         self.divisions = divisions
         self.clusters: List[List[int]] = None
         self.hubs = []
+        self.small_graph: List[Province] = None
+
+        self.colors = []
+        self.init_colors()
 
         self.change_to_tuple()
 
         self.time_bfs = 0.0
+        self.time_copy = 0.0
 
     def change_to_tuple(self):
         self.graph_tuples = tuple(
@@ -42,6 +49,15 @@ class ProvinceGraph:
 
     def __hash__(self):
         return hash((self.capital, tuple(self.graph)))
+
+    def init_colors(self):
+        colors = list(mcolors.CSS4_COLORS.keys())
+        colors.remove('white')
+        colors.remove('green')
+        colors.remove('black')
+        shuffle(colors)
+
+        self.colors = colors
 
     def graphviz_graph(self):
         graphviz_graph = Graph(engine='neato')
@@ -53,21 +69,27 @@ class ProvinceGraph:
                           node.neighbours)),
                  self.graph))
 
-        colors = list(mcolors.CSS4_COLORS.keys())
-        colors.remove('white')
-        colors.remove('green')
-        colors.remove('black')
-        shuffle(colors)
 
-        for cluster, _color in zip(self.clusters, colors[:len(self.clusters)]):
+
+        # color of clusters
+        for cluster, _color in zip(self.clusters, self.colors[:len(self.clusters)]):
             for node_id in cluster:
                 graphviz_graph.node(str(node_id), fillcolor=_color, style="filled")
 
+        # shape of divisions
         for division in self.divisions:
             graphviz_graph.node(str(division), shape="rectangle")
 
+        # capital
         graphviz_graph.node(str(self.capital), shape="pentagon", fillcolor="green", style="filled", height="1.1",
                             width="1.1")
+
+        # hubs
+        for hub in self.hubs:
+            graphviz_graph.node(str(hub), shape="diamond")
+
+        for hub_division in set(self.hubs).intersection(set(self.divisions)):
+            graphviz_graph.node(str(hub_division), shape="Mdiamond")
 
         return graphviz_graph
 
@@ -189,7 +211,8 @@ class ProvinceGraph:
         hub_remaining_capacity = Hub.max_capacity
 
         provinces_by_distance: List[List[int]] = [[]] * len(set(distance.values()))
-        [provinces_by_distance[dist].append(node_id) for node_id, dist in distance.items()]
+        [provinces_by_distance[dist].append(node_id) for node_id, dist in distance.items() if
+         node_id in provinces_in_range]
 
         # przejdz po prowincjach posortowanych po dystansie
 
@@ -221,27 +244,32 @@ class ProvinceGraph:
 
         # print(provinces_by_distance)
 
-    def __func_cost(self, hub_indexes: List[int], hub_levels: List[int], cluster: List[int]) -> float:
+    def __func_cost(self, hub_indexes: List[int], hub_levels: List[int], cluster: List[int], f: CostFunction) -> float:
 
-        graph_copy = deepcopy(self.graph)
+        s = time()
+
+        supplies_copy = {node_id: self.graph[node_id].required_supplies() for node_id in cluster}
+
+        self.time_copy += (time() - s)
+
+        # print(graph_copy)
+
         hubs_cost = sum(
             map(lambda hub_level: Hub(hub_level).cost(),
                 hub_levels)
         )
 
         def calculate_required_supplies_in_cluster():
-            return sum(map(lambda province_id: graph_copy[province_id].required_supplies(),
+            return sum(map(lambda province_id: self.graph[province_id].required_supplies(),
                            cluster
                            ))
 
         required_supplies_in_cluster_before = calculate_required_supplies_in_cluster()
 
         list(map(lambda hub_index_level:
-                 self.__place_hub_in_cluster(hub_index_level[0], hub_index_level[1], cluster, graph_copy),
+                 self.__place_hub_in_cluster(hub_index_level[0], hub_index_level[1], cluster, self.graph),
                  zip(hub_indexes, hub_levels)
                  ))
-
-
 
         # przejdz po klastrze i policz ile zaopatrzenia nie dostarczono
         required_supplies_in_cluster_after = calculate_required_supplies_in_cluster()
@@ -250,14 +278,22 @@ class ProvinceGraph:
         # monozymy przez procent dostarczonych zapasow
         # dzielimy przez wydane pieniadze
 
-        f = CostFunction(len(cluster))()
+
 
         if f(hubs_cost, ratio)[0] < 0:
             print("tu", hubs_cost, ratio)
 
+        list(map(
+            lambda key_value: self.graph[key_value[0]].set_required_supplies(key_value[1]),
+            supplies_copy.items()
+        ))
+
         return f(hubs_cost, ratio)[0]
 
     def __put_hub_in_cluster(self, cluster: List[int]):
+        # self.small_graph = [None] * (len(self.graph))
+        # for node_id in cluster:
+        #     self.small_graph[node_id] = deepcopy(self.graph[node_id])
 
         best_hub_placement = None
         best_evaluation = float('inf')
@@ -275,35 +311,60 @@ class ProvinceGraph:
 
         minimal_hub_count = math.ceil(required_supplies / Hub.max_capacity)
 
-        # optimizable len(cluster) -> num of divisions in cluster
-        for i in range(minimal_hub_count, len(cluster)):
+        num_of_divisions_in_cluster = sum(
+            map(lambda node_id: self.graph[node_id].number_of_divisions_in_province(),
+                cluster
+                ), 0
+        )
+        print("num", num_of_divisions_in_cluster, "len", len(cluster))
+
+        f = CostFunction()(len(cluster))
+
+        for i in range(minimal_hub_count, num_of_divisions_in_cluster):
             suggested_hubs_placement: List[Tuple[int]] = list(itertools.combinations(cluster, i))
             # print("s: " + str(suggested_hubs_placement))
             print("len ", len(suggested_hubs_placement))
             for hubs in suggested_hubs_placement:
                 levels = list(itertools.combinations_with_replacement([1, 2, 3], i))
-                # levels = [1] * i
+                # levels = [[1] * i]
                 for level in levels:
-                    evaluated_hubs_placement: float = self.__func_cost(list(hubs), list(level), cluster)
+                    evaluated_hubs_placement: float = self.__func_cost(list(hubs), list(level), cluster, f)
                     # print(evaluated_hubs_placement)
                     if evaluated_hubs_placement < best_evaluation:
                         best_evaluation = evaluated_hubs_placement
                         best_hub_placement = list(hubs), level
 
-                        if best_evaluation < 0.03:
-                            print(best_hub_placement)
-                            print(best_evaluation)
-                            # return
-
                         if best_evaluation == 0.0:
-                            return
-                        # print()
+                            print(best_hub_placement)
+                            print("time", self.time_copy)
+                            return best_hub_placement
 
-                    # print(i, best_evaluation, end=" ")
+        print(best_hub_placement)
+        print("time", self.time_copy)
 
+        return best_hub_placement
 
+        # print(i, best_evaluation, end=" ")
 
     def put_hubs_in_clusters(self):
-        list(map(lambda cluster: self.__put_hub_in_cluster(cluster),
-                 self.clusters
-                 ))
+        hubs = list(map(
+                    lambda cluster:
+                    self.__put_hub_in_cluster(cluster),
+                    self.clusters
+                ))
+
+        list(map(
+            lambda hubs_in_cluster:
+            map(
+                lambda hub_level:
+                self.graph[hub_level[0]].set_hub(hub_level[1]),
+                zip(hubs_in_cluster[0], hubs_in_cluster[1])
+            ),
+            hubs
+        ))
+
+        list(map(
+            lambda hubs_in_cluster:
+            self.hubs.extend(hubs_in_cluster[0]),
+            hubs
+        ))

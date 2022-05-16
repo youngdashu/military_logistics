@@ -10,6 +10,13 @@ if __name__ == "__main__":
 
     graph.clusterize_divisions()
 
+    visualize_graph(graph)
+
     graph.put_hubs_in_clusters()
 
     visualize_graph(graph)
+
+
+
+
+
