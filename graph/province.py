@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Union
 
 from graph.division import Division
 from graph.hub import Hub
@@ -8,11 +8,14 @@ class Province:
 
     def __init__(self, node_id, division: Division = None):
         self.node_id: int = node_id
-        self.neighbours: List[int] = []
+        self.neighbours: Union[List[int], Tuple[int]] = []
         self.railway_level: int = 0
         self.terrain = 0
         self.hub: Hub = None
         self.division: Division = division
+
+    def __hash__(self):
+        return hash((self.node_id, tuple(self.neighbours)))
 
     def railway_level_to_capacity(self):
         return 0 if self.railway_level == 0 else 15 + ((self.railway_level - 1) * 5)
@@ -32,3 +35,6 @@ class Province:
             diff = (self.division.required_supplies - supplies)
             self.division.required_supplies = supplies
         return diff
+
+    def change_to_tuple(self) -> Tuple[int]:
+        return tuple(self.neighbours)
