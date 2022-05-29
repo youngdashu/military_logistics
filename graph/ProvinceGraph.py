@@ -27,6 +27,7 @@ class ProvinceGraph:
         self.clusters: List[List[int]] = None
         self.hubs = []
         self.small_graph: List[Province] = None
+        self.provinces_number = len(self.graph)
 
         self.colors = []
         self.init_colors()
@@ -168,7 +169,7 @@ class ProvinceGraph:
             province_id_to_root_id[key] = value
 
         # tworzymy klastry na podstawie struktury province_id
-        for province_id in range(len(self.graph)):
+        for province_id in range(self.provinces_number):
             root_id = root(province_id_to_root_id, province_id)
 
             if root_id == -1:
