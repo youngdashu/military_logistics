@@ -1,20 +1,17 @@
 import functools
+from random import shuffle
+from typing import List, Tuple
+
 import itertools
 import math
-from typing import List, Tuple, Union
+import matplotlib.colors as mcolors
+from graphviz import Graph
+from time import time
 
 from graph.bfs import bfs
 from graph.cost_function import CostFunction
 from graph.hub import Hub
 from graph.province import Province
-
-from graphviz import Graph
-
-import matplotlib.colors as mcolors
-
-from random import shuffle
-
-from time import time
 
 
 class ProvinceGraph:
@@ -54,9 +51,8 @@ class ProvinceGraph:
 
         self.colors = colors
 
-    def graphviz_graph(self):
+    def graphviz_graph(self, bees: List[int] = None):
         graphviz_graph = Graph(engine='neato')
-
         list(map(lambda node:
                  list(map(lambda neighbour:
                           graphviz_graph.edge(str(node.node_id), str(neighbour)) if str(
@@ -83,6 +79,10 @@ class ProvinceGraph:
 
         for hub_division in set(self.hubs).intersection(set(self.divisions)):
             graphviz_graph.node(str(hub_division), shape="Mdiamond")
+
+        if bees:
+            for b in bees:
+                graphviz_graph.node(str(b), fontcolor="goldenrod3")
 
         return graphviz_graph
 

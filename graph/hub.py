@@ -1,5 +1,4 @@
 class Hub:
-
     max_capacity = 20.0
     hub_range = 3
     base_cost = 200.0
