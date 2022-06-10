@@ -39,6 +39,8 @@ class ProvinceGraph:
             map(lambda province: province.change_to_tuple(), self.graph)
         )
 
+
+
     def __hash__(self):
         return hash((self.capital, tuple(self.graph)))
 

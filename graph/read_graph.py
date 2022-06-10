@@ -47,7 +47,7 @@ def read_graph(file_name='input.txt'):
             else:
                 raise Exception()
 
-        print("graph adj list")
-        list(map(lambda n: print(n), graph_map))
+        # print("graph adj list")
+        # list(map(lambda n: print(n), graph_map))
 
     return ProvinceGraph(graph_map, capital, divisions)

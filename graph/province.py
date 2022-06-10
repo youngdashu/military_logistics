@@ -20,6 +20,9 @@ class Province(object):
     def __repr__(self) -> str:
         return str(self.node_id) + " " + str(self.neighbours)
 
+    def __lt__(self, other):
+        return self.terrain < other.terrain
+
     def required_supplies(self) -> float:
         return 0.0 if self.division is None else self.division.required_supplies
 
