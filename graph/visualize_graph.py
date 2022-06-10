@@ -4,6 +4,6 @@ from graph.ProvinceGraph import ProvinceGraph
 
 
 def visualize_graph(graph: ProvinceGraph):
-    graphviz_graph = graph.graphviz_graph()
-
+    graph.generate_terrain(1)
+    graphviz_graph = graph.vizualize_terrain()
     graphviz_graph.view(tempfile.mktemp('.gv'))

@@ -1,4 +1,3 @@
-from functools import cache
 from math import ceil
 
 from scipy.interpolate import interp2d
@@ -34,7 +33,6 @@ class CostFunction:
         fig.show()
         exit(0)
 
-    @cache
     def __call__(self, cluster_size: int, alfa: float = 0.1):
 
         minV = Hub(1).cost()

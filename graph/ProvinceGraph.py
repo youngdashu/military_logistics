@@ -1,8 +1,12 @@
 import functools
 import itertools
 import math
+import random
 from typing import List, Tuple, Union
 
+from numpy import sqrt
+
+from graph.MountainGenertor import mountainGenerator, riverGenerator
 from graph.bfs import bfs
 from graph.cost_function import CostFunction
 from graph.hub import Hub
@@ -339,3 +343,40 @@ class ProvinceGraph:
             self.hubs.extend(hubs_in_cluster[0]),
             hubs
         ))
+
+    def generate_terrain(self, number_of_mountains):
+
+        for i in range(number_of_mountains):
+            height = random.randint(75, 100)
+            mountainGenerator(self, random.randint(0, len(self.graph)), height)
+        riverGenerator(self,random.randint(0, len(self.graph)))
+
+    def vizualize_terrain(self):
+        graphviz_graph = Graph(engine='neato')
+
+        list(map(lambda node:
+                 list(map(lambda neighbour:
+                          graphviz_graph.edge(str(node.node_id), str(neighbour)) if str(
+                              neighbour) + " -- " + str(node.node_id) not in str(graphviz_graph) else None,
+                          node.neighbours)),
+                 self.graph))
+
+        for provice in self.graph:
+            graphviz_graph.node(str(provice.node_id), style='filled', label=str(provice.terrain), fillcolor=self.hex_color_generate(provice.terrain))
+
+        return graphviz_graph
+
+    def color_from_height(self,height):
+        norm_height = (height+100) / 200
+        norm_color = sqrt(norm_height)
+        color = (int)(norm_color * 256)
+        return color
+
+    def hex_color_generate(self,height):
+        if (height == 0 ):
+            return '#%02x%02x%02x' % (0, 255, 0)
+        if (height == 13.256 ):
+            return '#%02x%02x%02x' % (0, 0, 255)
+        else:
+            return '#%02x%02x%02x' % (255, self.color_from_height(height), 125)
+

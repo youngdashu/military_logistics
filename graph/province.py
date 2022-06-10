@@ -38,3 +38,9 @@ class Province(object):
 
     def set_hub(self, level):
         self.hub = Hub(level)
+
+    def __hash__(self):
+        return hash(self.node_id)
+
+    def __eq__(self, other):
+        return self.node_id == other.node_id
