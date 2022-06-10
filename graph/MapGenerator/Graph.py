@@ -2,7 +2,7 @@ import random
 
 from graph.ProvinceGraph import ProvinceGraph
 from graph.read_graph import read_graph
-from graph.visualize_graph import visualize_graph
+from graph.visualize_graph import visualize_graph_with_terrain
 
 
 class Graph:
@@ -44,13 +44,7 @@ class Graph:
             for id, vert in enumerate(bucket[1: number_of_edges + 1]):
                 neibour = bucket[1:][(vert % len(bucket) - 1)]
                 if (vert != neibour) and (vert not in self.neighbours_list[neibour]):
-                    self.neighbours_list[vert] |= set([neibour])
-        # for delta in range(4):
-        #     for i in range(len(bucets)-1):
-        #         first = random.choice(bucets[i])
-        #         second = random.choice(bucets[(i+delta)%len(bucets)])
-        #         if first!=second:
-        #             self.neighbours_list[first] |= {second}
+                    self.neighbours_list[vert] |= {neibour}
 
     def save_to_file(self):
         with open('mój.txt', 'w') as file:
@@ -61,7 +55,6 @@ class Graph:
                     line = str(id) + " " + str(n) + '\n'
                     file.write(line)
             file.close()
-
 
     def generate_terrain(self, number_of_mountains):
         self.terrain = []
@@ -76,4 +69,4 @@ if __name__ == '__main__':
 
     # graph.put_hubs_in_clusters()
 
-    visualize_graph(graph)
+    visualize_graph_with_terrain(graph)

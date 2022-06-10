@@ -1,4 +1,3 @@
-import collections
 import random
 from queue import PriorityQueue
 from typing import List
@@ -9,41 +8,8 @@ from graph.ProvinceGraph import ProvinceGraph
 from graph.province import Province
 
 
-def bfs_closest_hub(g: ProvinceGraph, root: int):
-    graph = g.graph_tuples
-    # print("graph")
-    # print(g.graph_tuples)
-
-    if root in g.hubs:
-        return root, 0
-
-    visited, queue, distance = set(), collections.deque([root]), collections.defaultdict(lambda: 0)
-    visited.add(root)
-
-    closest_hubs = []
-    closest_hub_dist = math.inf
-
-    while queue:
-        vertex: int = queue.popleft()
-        # if distance[vertex] > 2:
-        #     continue
-
-        for neighbour in graph[vertex]:
-            if neighbour not in visited:
-                visited.add(neighbour)
-                queue.append(neighbour)
-                distance[neighbour] += distance[vertex] + 1
-                if neighbour in g.hubs:
-                    closest_hubs.append(neighbour)
-                    closest_hub_dist = distance[neighbour]
-
-        if len(closest_hubs) > 0:
-            break
-    return closest_hubs, closest_hub_dist
-
-
-def dijkstra_closest_hub(g: ProvinceGraph, root: Province):
-    graph = g.graph  # List[Province]
+def dijkstra(g: ProvinceGraph, root: Province):
+    graph = g.graph
     dist = {province: math.inf for province in graph}
     dist[root] = 0
     visited = set()
@@ -54,40 +20,51 @@ def dijkstra_closest_hub(g: ProvinceGraph, root: Province):
         (d, p) = pq.get()
         visited.add(p)
 
-        # neighbors of p
-        # print(f"neighbors of {p.node_id}")
+        # neighbors of province p
         for ngh_id in p.neighbours:
-            # print(f"ngh: {ngh_id}")
             ngh = graph[ngh_id]
-            # print(ngh)
-            # print(visited)
+
             distance = ngh.terrain
-            # print(f"dist {distance}")
             if ngh not in visited:
                 old_cost = dist[ngh]
                 new_cost = dist[p] + distance
 
                 if new_cost < old_cost:
-
-                    # print(f"cost: {new_cost}")
-                    # print(f"put:    {(new_cost, ngh)}")
                     pq.put((new_cost, ngh))
                     dist[ngh] = new_cost
-
-    print(dist)
     return dist
 
-    #
-    # for neighbor in range(graph.v):
-    #     if graph.edges[v][neighbor] != -1:
-    #         distance = graph.edges[v][neighbor]
-    #         if neighbor not in graph.visited:
-    #             old_cost = dist[neighbor]
-    #             new_cost = dist[v] + distance
-    #             if new_cost < old_cost:
-    #                 pq.put((new_cost, neighbor))
-    #                 dist[neighbor] = new_cost
-    return dist
+
+def find_hub_closest_to_capital(g: ProvinceGraph, hubs: List[Province]):
+    root = g.graph[g.capital]
+
+    dist = dijkstra(g, root)
+
+
+
+def dijkstra_closest_hub(g: ProvinceGraph, root: Province):
+    print(f"root: {root.node_id}")
+    dist = dijkstra(g, root)
+
+    print(f"DIST FROM {root.node_id}")
+    for province, d in dist.items():
+        print(f"{province.node_id} ->  {d}")
+
+    hubs_distances = {province: dist for province, dist in dist.items() if province.node_id in g.hubs}
+    print("HUBS")
+    for province, d in hubs_distances.items():
+        print(f"{province.node_id} ->  {d}")
+
+    min_dist = min(hubs_distances.values())
+    closest_hubs = [province for province in hubs_distances if hubs_distances[province] == min_dist]
+
+    print(f"closest hub(s): {closest_hubs}, distance: {min_dist}")
+
+    # TODO: if multiple hubs with min distance -> choose the one with the shortest path to the capital
+    if len(closest_hubs) > 1:
+        return find_hub_closest_to_capital(g, closest_hubs), min_dist
+
+    return closest_hubs[0], min_dist
 
 
 class Bees:
@@ -109,7 +86,4 @@ class Bees:
         print(self.placed_bees)
         for bee in self.placed_bees:
             print(f"Searching for closest hub for bee in [{bee}] province")
-            hubs, dist = bfs_closest_hub(self.graph, bee)
-            print(f"found hub(s), distance: {dist}")
-            print(hubs)
-            print()
+            hubs, dist = dijkstra_closest_hub(self.graph, self.graph.graph[bee])

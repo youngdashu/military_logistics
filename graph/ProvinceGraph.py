@@ -1,4 +1,5 @@
 import functools
+import random
 from random import shuffle
 from typing import List, Tuple
 
@@ -6,13 +7,10 @@ import itertools
 import math
 import matplotlib.colors as mcolors
 from graphviz import Graph
-from time import time
-import random
-from typing import List, Tuple, Union
-
 from numpy import sqrt
+from time import time
 
-from graph.MountainGenertor import mountainGenerator, riverGenerator
+from graph.MountainGenerator import mountainGenerator, riverGenerator
 from graph.bfs import bfs
 from graph.cost_function import CostFunction
 from graph.hub import Hub
@@ -23,12 +21,12 @@ class ProvinceGraph:
 
     def __init__(self, graph: List[Province], capital: int = None, divisions: List[int] = None):
         self.graph: List[Province] = graph
-        self.graph_tuples: Tuple[Tuple[int]] = None
+        self.graph_tuples: Tuple[Tuple[int]]
         self.capital = capital
         self.divisions = divisions
-        self.clusters: List[List[int]] = None
+        self.clusters: List[List[int]]
         self.hubs = []
-        self.small_graph: List[Province] = None
+        self.small_graph: List[Province]
         self.provinces_number = len(self.graph)
 
         self.colors = []
@@ -43,8 +41,6 @@ class ProvinceGraph:
         self.graph_tuples = tuple(
             map(lambda province: province.change_to_tuple(), self.graph)
         )
-
-
 
     def __hash__(self):
         return hash((self.capital, tuple(self.graph)))
@@ -353,9 +349,9 @@ class ProvinceGraph:
         for i in range(number_of_mountains):
             height = random.randint(75, 100)
             mountainGenerator(self, random.randint(0, len(self.graph)), height)
-        riverGenerator(self,random.randint(0, len(self.graph)))
+        riverGenerator(self, random.randint(0, len(self.graph)))
 
-    def vizualize_terrain(self):
+    def vizualize_terrain(self, show_node_ids=False):
         graphviz_graph = Graph(engine='neato')
 
         list(map(lambda node:
@@ -365,22 +361,23 @@ class ProvinceGraph:
                           node.neighbours)),
                  self.graph))
 
-        for provice in self.graph:
-            graphviz_graph.node(str(provice.node_id), style='filled', label=str(provice.terrain), fillcolor=self.hex_color_generate(provice.terrain))
+        for province in self.graph:
+            label = str(province.node_id) if show_node_ids else str(province.terrain)
+            graphviz_graph.node(str(province.node_id), style='filled', label=label,
+                                fillcolor=self.hex_color_generate(province.terrain))
 
         return graphviz_graph
 
-    def color_from_height(self,height):
-        norm_height = (height+100) / 200
+    def color_from_height(self, height):
+        norm_height = (height + 100) / 200
         norm_color = sqrt(norm_height)
         color = (int)(norm_color * 256)
         return color
 
-    def hex_color_generate(self,height):
-        if (height == 0 ):
+    def hex_color_generate(self, height):
+        if (height == 0):
             return '#%02x%02x%02x' % (0, 255, 0)
-        if (height == 13.256 ):
+        if (height == 13.256):
             return '#%02x%02x%02x' % (0, 0, 255)
         else:
             return '#%02x%02x%02x' % (255, self.color_from_height(height), 125)
-

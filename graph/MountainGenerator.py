@@ -1,7 +1,6 @@
 import collections
 import random
 from functools import cache
-from typing import Tuple
 
 from numpy import arange
 
@@ -40,15 +39,14 @@ def mountainGenerator(graph: ProvinceGraph, root: int, startHeight: float):
 
 
 @cache
-def riverGenerator(graph: ProvinceGraph, root: int,len=8 ):
+def riverGenerator(graph: ProvinceGraph, root: int, len=8):
     default = lambda: 0
 
     visited, stack, distance = set(), list(), collections.defaultdict(default)
     visited.add(root)
     stack.append(root)
-    id =root
+    id = root
     for _ in range(len):
-            actuall =  neighbour_obj = graph.graph[id]
-            actuall.terrain = 13.256
-            id = graph.graph[id].neighbours[0]
-
+        actuall = neighbour_obj = graph.graph[id]
+        actuall.terrain = 13.256
+        id = graph.graph[id].neighbours[0]
