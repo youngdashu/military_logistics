@@ -15,6 +15,6 @@ if __name__ == "__main__":
     bees = visualize_bees(graph)
     print("Placed bees:")
     print(bees.placed_bees)
-
     bees.solve()
+    bees.sendBeesFromStartVert()
 

@@ -10,9 +10,13 @@ class Province(object):
         self.node_id: int = node_id
         self.neighbours: List[int] = []
         self.railway_level: int = 0
+        # railwayline:parent (int:int)
+        self.railway_parent = dict()
         self.terrain = 0
         self.hub: Hub = None
         self.division: Division = division
+        self.parent = None
+        self.levelCosts = [5,10,15,20,25]
 
     def railway_level_to_capacity(self):
         return 0 if self.railway_level == 0 else 15 + ((self.railway_level - 1) * 5)
@@ -52,4 +56,9 @@ class Province(object):
         self.railway_level += 1
         while self.railway_level_to_capacity() < new_supplies_going_through_province and self.railway_level < 5:
             self.railway_level += 1
+
+    def get_railway_build_cost(self,level=1):
+        if level<= self.railway_level:
+            return 0
+        return self.terrain+self.levelCosts[(level-self.railway_level)]
 
