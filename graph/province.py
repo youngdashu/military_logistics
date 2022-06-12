@@ -39,11 +39,17 @@ class Province(object):
     def number_of_divisions_in_province(self):
         return int(bool(self.division))
 
-    def set_hub(self, level):
-        self.hub = Hub(level)
+    def set_hub(self, level, required_supplies):
+        self.hub = Hub(level, required_supplies)
 
     def __hash__(self):
         return hash(self.node_id)
 
     def __eq__(self, other):
         return self.node_id == other.node_id
+
+    def upgrade_railway(self, new_supplies_going_through_province: float):
+        self.railway_level += 1
+        while self.railway_level_to_capacity() < new_supplies_going_through_province and self.railway_level < 5:
+            self.railway_level += 1
+
