@@ -3,8 +3,9 @@ class Hub:
     hub_range = 3
     base_cost = 200.0
 
-    def __init__(self, level=1):
+    def __init__(self, level=1, required_supplies = 0.0):
         self.level = level
+        self.required_supplies = required_supplies
 
     def __level_to_factor(self):
         if self.level == 1:
