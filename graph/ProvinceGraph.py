@@ -366,8 +366,11 @@ class ProvinceGraph:
             mountainGenerator(self, random.randint(0, len(self.graph)), height)
         riverGenerator(self, random.randint(0, len(self.graph)))
 
-    def vizualize_terrain(self, show_node_ids=False):
+    def vizualize_terrain(self, show_node_ids=False, rails=False):
         graphviz_graph = Graph(engine='neato')
+
+        if rails:
+            graphviz_graph = self.add_railroads_to_graphviz(graphviz_graph)
 
         list(map(lambda node:
                  list(map(lambda neighbour:
