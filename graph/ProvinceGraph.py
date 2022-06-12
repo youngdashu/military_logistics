@@ -384,6 +384,21 @@ class ProvinceGraph:
             graphviz_graph.node(str(province.node_id), style='filled', label=label,
                                 fillcolor=self.hex_color_generate(province.terrain))
 
+        # shape of divisions
+        for division in self.divisions:
+            graphviz_graph.node(str(division), shape="rectangle")
+
+        # capital
+        graphviz_graph.node(str(self.capital), shape="pentagon", fillcolor="green", style="filled", height="1.1",
+                            width="1.1")
+
+        # hubs
+        for hub in self.hubs:
+            graphviz_graph.node(str(hub), shape="diamond")
+
+        for hub_division in set(self.hubs).intersection(set(self.divisions)):
+            graphviz_graph.node(str(hub_division), shape="Mdiamond")
+
         return graphviz_graph
 
     def color_from_height(self, height):
@@ -395,7 +410,7 @@ class ProvinceGraph:
     def hex_color_generate(self, height):
         if (height == 0):
             return '#%02x%02x%02x' % (0, 255, 0)
-        if (height == 13.256):
+        if (height == 21.37):
             return '#%02x%02x%02x' % (0, 0, 255)
         else:
             return '#%02x%02x%02x' % (255, self.color_from_height(height), 125)

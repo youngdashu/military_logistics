@@ -41,5 +41,5 @@ def riverGenerator(graph: ProvinceGraph, root: int, len=8):
     id = root
     for _ in range(len):
         actual = graph.graph[id]
-        actual.terrain = 13.256
+        actual.terrain = 21.37
         id = graph.graph[id].neighbours[0]
