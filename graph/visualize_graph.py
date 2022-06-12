@@ -2,6 +2,10 @@ import tempfile
 
 from graph.ProvinceGraph import ProvinceGraph
 
+def visualize_graph(graph: ProvinceGraph, rails=False):
+    graphviz_graph = graph.graphviz_graph(rails=rails)
+
+    graphviz_graph.view(tempfile.mktemp('.gv'))
 
 def visualize_graph_with_terrain(graph: ProvinceGraph):
     graph.generate_terrain(1)
