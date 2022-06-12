@@ -19,12 +19,12 @@ from graph.province import Province
 
 class ProvinceGraph:
 
-    def __init__(self, graph: List[Province], capital: int = None, divisions: List[int] = None):
+    def __init__(self, graph: List[Province], capital: int, divisions: List[int] = None):
         self.graph: List[Province] = graph
         self.graph_tuples: Tuple[Tuple[int]]
         self.capital = capital
         self.divisions = divisions
-        self.clusters: List[List[int]]
+        self.clusters: List[List[int]] = []
         self.hubs = []
         self.small_graph: List[Province]
         self.provinces_number = len(self.graph)
@@ -36,6 +36,8 @@ class ProvinceGraph:
 
         self.time_bfs = 0.0
         self.time_copy = 0.0
+
+        self.graph[capital].railway_level = 5
 
     def change_to_tuple(self):
         self.graph_tuples = tuple(
@@ -54,14 +56,16 @@ class ProvinceGraph:
 
         self.colors = colors
 
-    def graphviz_graph(self, bees: List[int] = None):
+    def graphviz_graph(self, bees: List[int] = None, rails=False):
         graphviz_graph = Graph(engine='neato')
-        list(map(lambda node:
-                 list(map(lambda neighbour:
-                          graphviz_graph.edge(str(node.node_id), str(neighbour)) if str(
-                              neighbour) + " -- " + str(node.node_id) not in str(graphviz_graph) else None,
-                          node.neighbours)),
-                 self.graph))
+
+        if not rails:
+            list(map(lambda node:
+                     list(map(lambda neighbour:
+                              graphviz_graph.edge(str(node.node_id), str(neighbour)) if str(
+                                  neighbour) + " -- " + str(node.node_id) not in str(graphviz_graph) else None,
+                              node.neighbours)),
+                     self.graph))
 
         # color of clusters
         for cluster, _color in zip(self.clusters, self.colors[:len(self.clusters)]):
@@ -87,6 +91,17 @@ class ProvinceGraph:
             for b in bees:
                 graphviz_graph.node(str(b), fontcolor="goldenrod3")
 
+        if rails:
+            graphviz_graph = self.add_railroads_to_graphviz(graphviz_graph)
+            print(graphviz_graph)
+            list(map(lambda node:
+                     list(map(lambda neighbour:
+                              graphviz_graph.edge(str(node.node_id), str(neighbour)) if str(
+                                  neighbour) + " -- " + str(node.node_id) not in str(graphviz_graph) else None,
+                              node.neighbours)),
+                     self.graph))
+
+        print(graphviz_graph)
         return graphviz_graph
 
     def clusterize_divisions(self) -> List[List[int]]:
@@ -235,7 +250,12 @@ class ProvinceGraph:
             else:
                 hub_remaining_capacity -= set_supplies(hub_remaining_capacity, required_supplies_in_circle)
 
-    def __func_cost(self, hub_indexes: List[int], hub_levels: List[int], cluster: List[int], f: CostFunction) -> float:
+        # zwracamy ile supplies hub potrzebuje
+        return Hub.max_capacity - hub_remaining_capacity
+
+
+    def __func_cost(self, hub_indexes: List[int], hub_levels: List[int], cluster: List[int], f: CostFunction) -> \
+            Tuple[float, List[float]]:
 
         s = time()
 
@@ -257,6 +277,7 @@ class ProvinceGraph:
 
         required_supplies_in_cluster_before = calculate_required_supplies_in_cluster()
 
+        required_supplies_per_hub = \
         list(map(lambda hub_index_level:
                  self.__place_hub_in_cluster(hub_index_level[0], hub_index_level[1], cluster, self.graph),
                  zip(hub_indexes, hub_levels)
@@ -274,7 +295,7 @@ class ProvinceGraph:
             supplies_copy.items()
         ))
 
-        return f(hubs_cost, ratio)[0]
+        return f(hubs_cost, ratio)[0], required_supplies_per_hub
 
     def __put_hub_in_cluster(self, cluster: List[int]):
 
@@ -305,11 +326,11 @@ class ProvinceGraph:
                 levels = list(itertools.combinations_with_replacement([1, 2, 3], i))
 
                 for level in levels:
-                    evaluated_hubs_placement: float = self.__func_cost(list(hubs), list(level), cluster, f)
+                    evaluated_hubs_placement, required_supplies_per_hub = self.__func_cost(list(hubs), list(level), cluster, f)
 
                     if evaluated_hubs_placement < best_evaluation:
                         best_evaluation = evaluated_hubs_placement
-                        best_hub_placement = list(hubs), level
+                        best_hub_placement = list(hubs), level, required_supplies_per_hub
 
                         if best_evaluation == 0.0:
                             print(best_hub_placement)
@@ -328,15 +349,9 @@ class ProvinceGraph:
             self.clusters
         ))
 
-        list(map(
-            lambda hubs_in_cluster:
-            map(
-                lambda hub_level:
-                self.graph[hub_level[0]].set_hub(hub_level[1]),
-                zip(hubs_in_cluster[0], hubs_in_cluster[1])
-            ),
-            hubs
-        ))
+        for hubs_in_cluster in hubs:
+            for hub_index, level, required_supplies in zip(hubs_in_cluster[0], hubs_in_cluster[1], hubs_in_cluster[2]):
+                self.graph[hub_index].set_hub(level, required_supplies)
 
         list(map(
             lambda hubs_in_cluster:
@@ -381,3 +396,20 @@ class ProvinceGraph:
             return '#%02x%02x%02x' % (0, 0, 255)
         else:
             return '#%02x%02x%02x' % (255, self.color_from_height(height), 125)
+
+
+    def add_railroads_to_graphviz(self, graphviz_graph: Graph):
+        pairs: set = set()
+        for province in self.graph:
+            if province.railway_level == 0:
+                continue
+            for neighbour in province.neighbours:
+                if self.graph[neighbour].railway_level == 0:
+                    continue
+                if (province.node_id, neighbour) not in pairs:
+                    pairs.add((province.node_id, neighbour))
+                    pairs.add((neighbour, province.node_id))
+                    graphviz_graph.edge(str(province.node_id), str(neighbour), penwidth=str(1 + 1.5 * min(self.graph[neighbour].railway_level, province.railway_level)))
+                    graphviz_graph.edge(str(neighbour), str(province.node_id), penwidth=str(1 + 1.5 * min(self.graph[neighbour].railway_level, province.railway_level)))
+        return graphviz_graph
+
