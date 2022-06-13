@@ -18,3 +18,4 @@ if __name__ == "__main__":
     bees.solve()
     bees.sendBeesFromStartVert()
 
+    visualize_graph_with_terrain(graph, True)
