@@ -1,12 +1,11 @@
 from functools import cache
-from math import ceil
-
-from scipy.interpolate import interp2d
-import numpy as np
-
-from graph.hub import Hub
 
 import matplotlib.pyplot as plt
+import numpy as np
+from math import ceil
+from scipy.interpolate import interp2d
+
+from graph.hub import Hub
 
 
 class CostFunction:

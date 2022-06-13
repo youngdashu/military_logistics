@@ -1,5 +1,5 @@
-from typing import List
 import re
+from typing import List
 
 from graph.ProvinceGraph import ProvinceGraph
 from graph.division import Division
@@ -40,13 +40,14 @@ def read_graph(file_name='input.txt'):
                 division: Division = None
                 if 'D' in line:
                     index = line.index('D')
-                    division = Division(float(line[index+1]))
+                    division = Division(float(line[index + 1]))
                     divisions.append(node_id)
 
                 graph_map[node_id] = Province(node_id, division)
             else:
                 raise Exception()
 
-        list(map(lambda n: print(n), graph_map))
+        # print("graph adj list")
+        # list(map(lambda n: print(n), graph_map))
 
     return ProvinceGraph(graph_map, capital, divisions)
